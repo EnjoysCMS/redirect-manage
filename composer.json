@@ -1,0 +1,16 @@
+{
+    "name": "enjoyscms/redirect-manage",
+    "description": "Redirect Manage. Module for EnjoysCMS",
+    "type": "enjoyscms-module",
+    "require": {
+        "php": "^8.1",
+        "enjoyscms/core": "^6.0@dev",
+        "enjoyscms/admin": "^6.0@dev"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Enjoyscms\\RedirectManage\\": "src/"
+        }
+    }
+}
