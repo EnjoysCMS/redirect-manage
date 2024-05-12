@@ -7,10 +7,16 @@
         "enjoyscms/core": "^6.0@dev",
         "enjoyscms/admin": "^6.0@dev"
     },
+    "extra": {
+        "module-name": "Менеджер переадресаций",
+        "admin-links": {
+            "@redirect_manage_list": "Обзор"
+        }
+    },
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Enjoyscms\\RedirectManage\\": "src/"
+            "EnjoysCMS\\RedirectManage\\": "src/"
         }
     }
 }
