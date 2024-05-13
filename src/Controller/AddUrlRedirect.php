@@ -2,20 +2,25 @@
 
 namespace EnjoysCMS\RedirectManage\Controller;
 
+use DI\DependencyException;
+use DI\NotFoundException;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
 use Enjoys\Forms\Exception\ExceptionRule;
 use Enjoys\Forms\Form;
-use Enjoys\Forms\Interfaces\RendererInterface;
 use Enjoys\Forms\Rules;
 use EnjoysCMS\ContentEditor\AceEditor\Ace;
+use EnjoysCMS\Core\ContentEditor\ContentEditor;
 use EnjoysCMS\Module\Admin\AdminController;
 use EnjoysCMS\RedirectManage\Entity\UrlRedirect;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Yaml\Yaml;
+use Twig\Error\LoaderError;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 
 #[Route(
     path: '/admin/redirects/add',
@@ -24,17 +29,21 @@ use Symfony\Component\Yaml\Yaml;
         'comment' => '[ADMIN] Добавление адреса перенаправления'
     ]
 )]
-class AddUrlRedirect extends AdminController
+class AddUrlRedirect extends AbstractController
 {
     /**
-     * @throws OptimisticLockException
-     * @throws ORMException
      * @throws ExceptionRule
+     * @throws ORMException
+     * @throws OptimisticLockException
+     * @throws DependencyException
+     * @throws NotFoundException
+     * @throws LoaderError
+     * @throws RuntimeError
+     * @throws SyntaxError
      */
     public function __invoke(
-        ServerRequestInterface $request,
         EntityManager $em,
-        RendererInterface $renderer,
+        ContentEditor $contentEditor
     ): ResponseInterface {
         $form = new Form();
         $form->setDefaults([
@@ -48,9 +57,9 @@ class AddUrlRedirect extends AdminController
                 UrlRedirect::TO_ROUTE => 'Route'
             ]);
         $form->textarea('redirectParams', 'Параметры перенаправления')
-            ->addRule(Rules::CALLBACK, 'RedirectParams is not valid', function () use ($request) {
-                $data = Yaml::parse($request->getParsedBody()['redirectParams'] ?? '');
-                return match ($request->getParsedBody()['type']) {
+            ->addRule(Rules::CALLBACK, 'RedirectParams is not valid', function () {
+                $data = Yaml::parse($this->request->getParsedBody()['redirectParams'] ?? '');
+                return match ($this->request->getParsedBody()['type'] ?? '') {
                     UrlRedirect::TO_URL => array_key_exists('url', $data),
                     UrlRedirect::TO_ROUTE => array_key_exists('route', $data),
                     default => false,
@@ -60,22 +69,24 @@ class AddUrlRedirect extends AdminController
 
         if ($form->isSubmitted()) {
             $urlRedirect = new UrlRedirect();
-            $urlRedirect->setOldUrl($request->getParsedBody()['oldUrl'] ?? null);
-            $urlRedirect->setType($request->getParsedBody()['type'] ?? null);
-            $urlRedirect->setRedirectParams(Yaml::parse($request->getParsedBody()['redirectParams'] ?? ''));
+            $urlRedirect->setOldUrl($this->request->getParsedBody()['oldUrl'] ?? null);
+            $urlRedirect->setType($this->request->getParsedBody()['type'] ?? null);
+            $urlRedirect->setRedirectParams(Yaml::parse($this->request->getParsedBody()['redirectParams'] ?? ''));
             $em->persist($urlRedirect);
             $em->flush();
-            return $redirect->toRoute('redirects/manage');
+            return $this->redirect->toRoute('@redirect_manage_list');
         }
+
+        $renderer = $this->adminConfig->getRendererForm();
         $renderer->setForm($form);
 
-        return $this->responseText(
-            $this->view('@redirect-manage/form.twig', [
+        return $this->response(
+            $this->twig->render('@redirect-manage/form.twig', [
                 'title' => 'Добавить redirect',
                 'editorEmbedCode' => $contentEditor
                     ->withConfig([
                         Ace::class => [
-                            'template' => $_ENV['ROOT_PATH'] . '/template/agro/app/redirects/ace-editor-yaml.twig'
+                            'template' => __DIR__ . '/../../template/ace-editor-yaml.twig'
                         ]
                     ])
                     ->setSelector('#redirectParams')

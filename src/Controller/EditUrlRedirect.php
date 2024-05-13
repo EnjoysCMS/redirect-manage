@@ -13,41 +13,44 @@ use Enjoys\Forms\Exception\ExceptionRule;
 use Enjoys\Forms\Form;
 use Enjoys\Forms\Rules;
 use EnjoysCMS\ContentEditor\AceEditor\Ace;
-use EnjoysCMS\Module\Admin\AdminController;
+use EnjoysCMS\Core\ContentEditor\ContentEditor;
+use EnjoysCMS\Core\Routing\Annotation\Route;
 use EnjoysCMS\Module\Admin\Config;
 use EnjoysCMS\RedirectManage\Entity\UrlRedirect;
 use EnjoysCMS\RedirectManage\Repository\UrlRedirectRepository;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Yaml\Yaml;
+use Twig\Error\LoaderError;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 
 #[Route(
     path: '/admin/redirects/edit',
     name: 'redirects/edit',
-    options: [
-        'comment' => '[ADMIN] Редактирование адреса перенаправления'
-    ]
+    comment: 'Редактирование адреса перенаправления'
 )]
-class EditUrlRedirect extends AdminController
+class EditUrlRedirect extends AbstractController
 {
+
     /**
+     * @throws DependencyException
+     * @throws ExceptionRule
+     * @throws LoaderError
      * @throws NoResultException
+     * @throws NotFoundException
      * @throws ORMException
      * @throws OptimisticLockException
-     * @throws DependencyException
-     * @throws NotFoundException
-     * @throws NotSupported
-     * @throws ExceptionRule
+     * @throws RuntimeError
+     * @throws SyntaxError
      */
     public function __invoke(
-        ServerRequestInterface $request,
         UrlRedirectRepository $repository,
         EntityManager $em,
-        Config $adminConfig
+        ContentEditor $contentEditor
     ): ResponseInterface {
         $urlRedirect = $repository->find(
-            $request->getQueryParams()['id'] ?? 0
+            $this->request->getQueryParams()['id'] ?? 0
         ) ?? throw new NoResultException();
 
         $form = new Form();
@@ -74,9 +77,9 @@ class EditUrlRedirect extends AdminController
         $form->textarea('redirectParams', 'Параметры перенаправления')->addRule(
             Rules::CALLBACK,
             'RedirectParams is not valid',
-            function () use ($request) {
-                $data = Yaml::parse($request->getParsedBody()['redirectParams'] ?? '');
-                return match ($request->getParsedBody()['type']) {
+            function () {
+                $data = Yaml::parse($this->request->getParsedBody()['redirectParams'] ?? '');
+                return match ($this->request->getParsedBody()['type'] ?? '') {
                     UrlRedirect::TO_URL => array_key_exists('url', $data),
                     UrlRedirect::TO_ROUTE => array_key_exists('route', $data),
                     default => false,
@@ -86,14 +89,15 @@ class EditUrlRedirect extends AdminController
         $form->submit();
 
         if ($form->isSubmitted()) {
-            $urlRedirect->setOldUrl($request->getParsedBody()['oldUrl'] ?? null);
-            $urlRedirect->setType($request->getParsedBody()['type'] ?? null);
-            $urlRedirect->setRedirectParams(Yaml::parse($request->getParsedBody()['redirectParams'] ?? ''));
-            $urlRedirect->setActive((bool)($request->getParsedBody()['active'] ?? false));
+            $urlRedirect->setOldUrl($this->request->getParsedBody()['oldUrl'] ?? null);
+            $urlRedirect->setType($this->request->getParsedBody()['type'] ?? null);
+            $urlRedirect->setRedirectParams(Yaml::parse($this->request->getParsedBody()['redirectParams'] ?? ''));
+            $urlRedirect->setActive((bool)($this->request->getParsedBody()['active'] ?? false));
 
             $em->flush();
             return $this->redirect->toRoute('@redirect_manage_list');
         }
+        $renderer = $this->adminConfig->getRendererForm();
         $renderer->setForm($form);
 
         return $this->response(
@@ -102,7 +106,7 @@ class EditUrlRedirect extends AdminController
                 'editorEmbedCode' => $contentEditor
                     ->withConfig([
                         Ace::class => [
-                            'template' => $_ENV['ROOT_PATH'].'/template/ace-editor-yaml.twig'
+                            'template' => __DIR__ . '/../../template/ace-editor-yaml.twig'
                         ]
                     ])
                     ->setSelector('#redirectParams')

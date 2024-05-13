@@ -13,10 +13,10 @@ use Twig\Error\SyntaxError;
 #[Route(
     path: '/admin/redirects',
     name: '@redirect_manage_list',
-    comment: 'Менеджер переадресаций',
     options: [
         'admin' => 'Управление переадресациями'
-    ]
+    ],
+    comment: 'Менеджер переадресаций'
 )]
 class ManageUrlRedirect extends AbstractController
 {
