@@ -32,7 +32,7 @@ final readonly class RedirectStackCollection
     {
         foreach ($this->repository->findBy(['active' => true]) as $urlRedirect) {
             try {
-                if ($urlRedirect->getType() === UrlRedirect::TO_ROUTE) {
+                if ($urlRedirect->getType() === RedirectType::ROUTE) {
                     $this->collection->set(
                         $urlRedirect->getOldUrl(),
                         $this->urlGenerator->generate(
@@ -43,7 +43,7 @@ final readonly class RedirectStackCollection
                     continue;
                 }
 
-                if ($urlRedirect->getType() === UrlRedirect::TO_URL) {
+                if ($urlRedirect->getType() === RedirectType::URL) {
                     $this->collection->set(
                         $urlRedirect->getOldUrl(),
                         $urlRedirect->getRedirectParams()['url'] ?? throw new RuntimeException()

@@ -14,6 +14,7 @@ use EnjoysCMS\ContentEditor\AceEditor\Ace;
 use EnjoysCMS\Core\ContentEditor\ContentEditor;
 use EnjoysCMS\Module\Admin\AdminController;
 use EnjoysCMS\RedirectManage\Entity\UrlRedirect;
+use EnjoysCMS\RedirectManage\RedirectType;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\Routing\Annotation\Route;
@@ -53,15 +54,15 @@ class AddUrlRedirect extends AbstractController
         $form->select('type', 'Тип')
             //  ->addAttribute(AttributeFactory::create('onchange', 'setTemplateType(this.value, "redirectParams")'))
             ->fill([
-                UrlRedirect::TO_URL => 'Url',
-                UrlRedirect::TO_ROUTE => 'Route'
+                RedirectType::URL->value => 'Url',
+                RedirectType::ROUTE->value => 'Route'
             ]);
         $form->textarea('redirectParams', 'Параметры перенаправления')
             ->addRule(Rules::CALLBACK, 'RedirectParams is not valid', function () {
                 $data = Yaml::parse($this->request->getParsedBody()['redirectParams'] ?? '');
                 return match ($this->request->getParsedBody()['type'] ?? '') {
-                    UrlRedirect::TO_URL => array_key_exists('url', $data),
-                    UrlRedirect::TO_ROUTE => array_key_exists('route', $data),
+                    RedirectType::URL->value => array_key_exists('url', $data),
+                    RedirectType::ROUTE->value => array_key_exists('route', $data),
                     default => false,
                 };
             });
@@ -70,7 +71,7 @@ class AddUrlRedirect extends AbstractController
         if ($form->isSubmitted()) {
             $urlRedirect = new UrlRedirect();
             $urlRedirect->setOldUrl($this->request->getParsedBody()['oldUrl'] ?? null);
-            $urlRedirect->setType($this->request->getParsedBody()['type'] ?? null);
+            $urlRedirect->setType(RedirectType::from($this->request->getParsedBody()['type'] ?? null));
             $urlRedirect->setRedirectParams(Yaml::parse($this->request->getParsedBody()['redirectParams'] ?? ''));
             $em->persist($urlRedirect);
             $em->flush();

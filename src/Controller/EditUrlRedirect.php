@@ -5,7 +5,6 @@ namespace EnjoysCMS\RedirectManage\Controller;
 use DI\DependencyException;
 use DI\NotFoundException;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\Exception\NotSupported;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\OptimisticLockException;
@@ -15,11 +14,9 @@ use Enjoys\Forms\Rules;
 use EnjoysCMS\ContentEditor\AceEditor\Ace;
 use EnjoysCMS\Core\ContentEditor\ContentEditor;
 use EnjoysCMS\Core\Routing\Annotation\Route;
-use EnjoysCMS\Module\Admin\Config;
-use EnjoysCMS\RedirectManage\Entity\UrlRedirect;
+use EnjoysCMS\RedirectManage\RedirectType;
 use EnjoysCMS\RedirectManage\Repository\UrlRedirectRepository;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\Yaml\Yaml;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
@@ -71,8 +68,8 @@ class EditUrlRedirect extends AbstractController
         $form->text('oldUrl', 'Старый URL');
         $form->select('type', 'Тип')
             ->fill([
-                UrlRedirect::TO_URL => 'Url',
-                UrlRedirect::TO_ROUTE => 'Route'
+                RedirectType::URL->value => 'Url',
+                RedirectType::ROUTE->value => 'Route'
             ]);
         $form->textarea('redirectParams', 'Параметры перенаправления')->addRule(
             Rules::CALLBACK,
@@ -80,8 +77,8 @@ class EditUrlRedirect extends AbstractController
             function () {
                 $data = Yaml::parse($this->request->getParsedBody()['redirectParams'] ?? '');
                 return match ($this->request->getParsedBody()['type'] ?? '') {
-                    UrlRedirect::TO_URL => array_key_exists('url', $data),
-                    UrlRedirect::TO_ROUTE => array_key_exists('route', $data),
+                    RedirectType::URL->value => array_key_exists('url', $data),
+                    RedirectType::ROUTE->value => array_key_exists('route', $data),
                     default => false,
                 };
             }
@@ -90,7 +87,7 @@ class EditUrlRedirect extends AbstractController
 
         if ($form->isSubmitted()) {
             $urlRedirect->setOldUrl($this->request->getParsedBody()['oldUrl'] ?? null);
-            $urlRedirect->setType($this->request->getParsedBody()['type'] ?? null);
+            $urlRedirect->setType(RedirectType::from($this->request->getParsedBody()['type'] ?? null));
             $urlRedirect->setRedirectParams(Yaml::parse($this->request->getParsedBody()['redirectParams'] ?? ''));
             $urlRedirect->setActive((bool)($this->request->getParsedBody()['active'] ?? false));
 
