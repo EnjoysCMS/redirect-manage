@@ -49,6 +49,7 @@ class EditUrlRedirect extends AbstractController
         $form->setDefaults([
             'pattern' => $urlRedirect->getPattern(),
             'replacement' => $urlRedirect->getReplacement(),
+            'description' => $urlRedirect->getDescription(),
             'active' => [(int)$urlRedirect->isActive()],
         ]);
         $form->checkbox('active')
@@ -83,6 +84,7 @@ class EditUrlRedirect extends AbstractController
                 HTML
             )->addRule(Rules::REQUIRED);
         $form->text('replacement', 'Replacement')->addRule(Rules::REQUIRED);
+        $form->textarea('description', 'Описание');
 
 
         $form->submit();
@@ -90,6 +92,7 @@ class EditUrlRedirect extends AbstractController
         if ($form->isSubmitted()) {
             $urlRedirect->setPattern($this->request->getParsedBody()['pattern'] ?? '');
             $urlRedirect->setReplacement($this->request->getParsedBody()['replacement'] ?? '');
+            $urlRedirect->setDescription($this->request->getParsedBody()['description'] ?? null);
             $urlRedirect->setActive((bool)($this->request->getParsedBody()['active'] ?? false));
 
             $em->flush();

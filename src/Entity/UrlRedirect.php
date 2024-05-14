@@ -23,6 +23,9 @@ class UrlRedirect
     private string $replacement;
 
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $description = null;
+
     #[ORM\Column(type: 'boolean', options: ['default' => true])]
     private bool $permanent = true;
 
@@ -88,5 +91,15 @@ class UrlRedirect
     public function setInclQuery(bool $inclQuery): void
     {
         $this->inclQuery = $inclQuery;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): void
+    {
+        $this->description = $description;
     }
 }

@@ -17,6 +17,7 @@
                     <thead>
                     <tr class="bg-dark">
                         <td>Условие</td>
+                        <td>Описание</td>
                         <td>Включать query при перенаправлении?</td>
                         <td>Постоянный редирект?</td>
                         <td>
@@ -32,7 +33,7 @@
                                 <span
                                     class="font-weight-bolder text-monospace text-info">{{ redirect.replacement }}</span>
                             </td>
-
+                            <td>{{ redirect.description ?? '&mdash;' }} </td>
                             <td> <span
                                     class="font-weight-bolder">{{ redirect.inclQuery is same as (true) ? 'Да' : 'Нет' }}</span>
                             </td>

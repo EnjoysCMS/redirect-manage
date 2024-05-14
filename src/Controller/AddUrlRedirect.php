@@ -66,13 +66,14 @@ class AddUrlRedirect extends AbstractController
                 HTML
             )->addRule(Rules::REQUIRED);
         $form->text('replacement', 'Replacement')->addRule(Rules::REQUIRED);
-
+        $form->textarea('description', 'Описание');
         $form->submit();
 
         if ($form->isSubmitted()) {
             $urlRedirect = new UrlRedirect();
             $urlRedirect->setPattern($this->request->getParsedBody()['pattern'] ?? '');
             $urlRedirect->setReplacement($this->request->getParsedBody()['replacement'] ?? '');
+            $urlRedirect->setDescription($this->request->getParsedBody()['description'] ?? null);
             $em->persist($urlRedirect);
             $em->flush();
             return $this->redirect->toRoute('@redirect_manage_list');
