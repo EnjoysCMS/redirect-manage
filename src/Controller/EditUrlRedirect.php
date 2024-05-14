@@ -10,11 +10,8 @@ use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Enjoys\Forms\Exception\ExceptionRule;
 use Enjoys\Forms\Form;
-use Enjoys\Forms\Rules;
-use EnjoysCMS\ContentEditor\AceEditor\Ace;
 use EnjoysCMS\Core\ContentEditor\ContentEditor;
 use EnjoysCMS\Core\Routing\Annotation\Route;
-use EnjoysCMS\RedirectManage\RedirectType;
 use EnjoysCMS\RedirectManage\Repository\UrlRedirectRepository;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Yaml\Yaml;
@@ -44,7 +41,6 @@ class EditUrlRedirect extends AbstractController
     public function __invoke(
         UrlRedirectRepository $repository,
         EntityManager $em,
-        ContentEditor $contentEditor
     ): ResponseInterface {
         $urlRedirect = $repository->find(
             $this->request->getQueryParams()['id'] ?? 0
@@ -52,9 +48,8 @@ class EditUrlRedirect extends AbstractController
 
         $form = new Form();
         $form->setDefaults([
-            'oldUrl' => $urlRedirect->getOldUrl(),
-            'type' => $urlRedirect->getType(),
-            'redirectParams' => Yaml::dump($urlRedirect->getRedirectParams()),
+            'pattern' => $urlRedirect->getPattern(),
+            'replacement' => Yaml::dump($urlRedirect->getReplacement()),
             'active' => [(int)$urlRedirect->isActive()],
         ]);
         $form->checkbox('active')
@@ -65,30 +60,15 @@ class EditUrlRedirect extends AbstractController
             )
             ->fill([1 => 'Включен?']);
 
-        $form->text('oldUrl', 'Старый URL');
-        $form->select('type', 'Тип')
-            ->fill([
-                RedirectType::URL->value => 'Url',
-                RedirectType::ROUTE->value => 'Route'
-            ]);
-        $form->textarea('redirectParams', 'Параметры перенаправления')->addRule(
-            Rules::CALLBACK,
-            'RedirectParams is not valid',
-            function () {
-                $data = Yaml::parse($this->request->getParsedBody()['redirectParams'] ?? '');
-                return match ($this->request->getParsedBody()['type'] ?? '') {
-                    RedirectType::URL->value => array_key_exists('url', $data),
-                    RedirectType::ROUTE->value => array_key_exists('route', $data),
-                    default => false,
-                };
-            }
-        );
+        $form->text('pattern', 'Старый URL');
+        $form->text('replacement', 'New URL');
+
+
         $form->submit();
 
         if ($form->isSubmitted()) {
-            $urlRedirect->setOldUrl($this->request->getParsedBody()['oldUrl'] ?? null);
-            $urlRedirect->setType(RedirectType::from($this->request->getParsedBody()['type'] ?? null));
-            $urlRedirect->setRedirectParams(Yaml::parse($this->request->getParsedBody()['redirectParams'] ?? ''));
+            $urlRedirect->setPattern($this->request->getParsedBody()['pattern'] ?? null);
+            $urlRedirect->setReplacement($this->request->getParsedBody()['replacement'] ?? null);
             $urlRedirect->setActive((bool)($this->request->getParsedBody()['active'] ?? false));
 
             $em->flush();
@@ -100,14 +80,6 @@ class EditUrlRedirect extends AbstractController
         return $this->response(
             $this->twig->render('@redirect-manage/form.twig', [
                 'title' => 'Добавить redirect',
-                'editorEmbedCode' => $contentEditor
-                    ->withConfig([
-                        Ace::class => [
-                            'template' => __DIR__ . '/../../template/ace-editor-yaml.twig'
-                        ]
-                    ])
-                    ->setSelector('#redirectParams')
-                    ->getEmbedCode(),
                 'form' => $renderer
             ])
         );

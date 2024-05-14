@@ -50,29 +50,15 @@ class AddUrlRedirect extends AbstractController
         $form->setDefaults([
             'redirectParams' => 'url:'
         ]);
-        $form->text('oldUrl', 'Старый URL')->addRule(Rules::REQUIRED);
-        $form->select('type', 'Тип')
-            //  ->addAttribute(AttributeFactory::create('onchange', 'setTemplateType(this.value, "redirectParams")'))
-            ->fill([
-                RedirectType::URL->value => 'Url',
-                RedirectType::ROUTE->value => 'Route'
-            ]);
-        $form->textarea('redirectParams', 'Параметры перенаправления')
-            ->addRule(Rules::CALLBACK, 'RedirectParams is not valid', function () {
-                $data = Yaml::parse($this->request->getParsedBody()['redirectParams'] ?? '');
-                return match ($this->request->getParsedBody()['type'] ?? '') {
-                    RedirectType::URL->value => array_key_exists('url', $data),
-                    RedirectType::ROUTE->value => array_key_exists('route', $data),
-                    default => false,
-                };
-            });
+        $form->text('pattern', 'Старый URL')->addRule(Rules::REQUIRED);
+        $form->text('replacement', 'New URL')->addRule(Rules::REQUIRED);
+
         $form->submit();
 
         if ($form->isSubmitted()) {
             $urlRedirect = new UrlRedirect();
-            $urlRedirect->setOldUrl($this->request->getParsedBody()['oldUrl'] ?? null);
-            $urlRedirect->setType(RedirectType::from($this->request->getParsedBody()['type'] ?? null));
-            $urlRedirect->setRedirectParams(Yaml::parse($this->request->getParsedBody()['redirectParams'] ?? ''));
+            $urlRedirect->setPattern($this->request->getParsedBody()['pattern'] ?? null);
+            $urlRedirect->setReplacement($this->request->getParsedBody()['replacement'] ?? null);
             $em->persist($urlRedirect);
             $em->flush();
             return $this->redirect->toRoute('@redirect_manage_list');
@@ -84,14 +70,6 @@ class AddUrlRedirect extends AbstractController
         return $this->response(
             $this->twig->render('@redirect-manage/form.twig', [
                 'title' => 'Добавить redirect',
-                'editorEmbedCode' => $contentEditor
-                    ->withConfig([
-                        Ace::class => [
-                            'template' => __DIR__ . '/../../template/ace-editor-yaml.twig'
-                        ]
-                    ])
-                    ->setSelector('#redirectParams')
-                    ->getEmbedCode(),
                 'form' => $renderer
             ])
         );

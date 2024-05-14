@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace EnjoysCMS\RedirectManage\Middleware;
 
-use Doctrine\Common\Collections\Collection;
-use EnjoysCMS\RedirectManage\RedirectCollectionInterface;
+use EnjoysCMS\RedirectManage\RedirectCollection;
 use EnjoysCMS\RedirectManage\RedirectStackCollection;
+use EnjoysCMS\RedirectManage\Repository\UrlRedirectRepository;
 use Middlewares\Utils\Factory;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -29,7 +29,7 @@ final class Redirect implements MiddlewareInterface
     private readonly ResponseFactoryInterface $responseFactory;
 
     public function __construct(
-        private readonly RedirectCollectionInterface $redirects,
+        private readonly UrlRedirectRepository $repository,
         ResponseFactoryInterface $responseFactory = null
     ) {
         $this->responseFactory = $responseFactory ?: Factory::getResponseFactory();
@@ -77,18 +77,19 @@ final class Redirect implements MiddlewareInterface
             $uri .= '?' . $query;
         }
 
+        foreach ($this->repository->findBy(['active' => true]) as $urlRedirect) {
 
-        if (!isset($this->redirects[$uri])) {
-            return $handler->handle($request);
+
+            if (!preg_match(sprintf('/%s/', $urlRedirect->getPattern()), $uri)) {
+                continue;
+            }
+
+            $responseCode = $this->determineResponseCode($request);
+            return $this->responseFactory->createResponse($responseCode)
+                ->withAddedHeader('Location', preg_replace(sprintf('/%s/', $urlRedirect->getPattern()), $urlRedirect->getReplacement(), $uri));
         }
 
-        if (!in_array($request->getMethod(), $this->method)) {
-            return $this->responseFactory->createResponse(405);
-        }
-
-        $responseCode = $this->determineResponseCode($request);
-        return $this->responseFactory->createResponse($responseCode)
-            ->withAddedHeader('Location', $this->redirects[$uri]);
+        return $handler->handle($request);
     }
 
     /**

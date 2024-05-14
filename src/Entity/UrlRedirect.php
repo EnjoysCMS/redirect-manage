@@ -18,13 +18,10 @@ class UrlRedirect
     private int $id;
 
     #[ORM\Column(type: 'string', length: 1000)]
-    private string $oldUrl;
+    private string $pattern;
 
-    #[ORM\Column(type: 'string', enumType: RedirectType::class)]
-    private RedirectType $type;
-
-    #[ORM\Column(type: 'json')]
-    private array $redirectParams;
+    #[ORM\Column(type: 'string', length: 1000)]
+    private string $replacement;
 
     #[ORM\Column(type: 'boolean', options: [
         'default' => true
@@ -37,24 +34,14 @@ class UrlRedirect
         return $this->id;
     }
 
-    public function getOldUrl(): string
+    public function getPattern(): string
     {
-        return $this->oldUrl;
+        return $this->pattern;
     }
 
-    public function setOldUrl(string $oldUrl): void
+    public function setPattern(string $pattern): void
     {
-        $this->oldUrl = $oldUrl;
-    }
-
-    public function getType(): RedirectType
-    {
-        return $this->type;
-    }
-
-    public function setType(RedirectType $type): void
-    {
-        $this->type = $type;
+        $this->pattern = $pattern;
     }
 
     public function isActive(): bool
@@ -67,13 +54,13 @@ class UrlRedirect
         $this->active = $active;
     }
 
-    public function getRedirectParams(): array
+    public function getReplacement(): string
     {
-        return $this->redirectParams;
+        return $this->replacement;
     }
 
-    public function setRedirectParams(array $redirectParams): void
+    public function setReplacement(string $replacement): void
     {
-        $this->redirectParams = $redirectParams;
+        $this->replacement = $replacement;
     }
 }

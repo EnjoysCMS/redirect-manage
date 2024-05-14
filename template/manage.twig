@@ -18,9 +18,8 @@
                 <ul>
                     {% for redirect in redirects %}
                         <li class="my-3">
-                            <div class="font-weight-bolder">{{ redirect.oldUrl }} <a target="_blank" class="text-reset small" href="{{ redirect.oldUrl }}"><i class="fa fa-external-link-alt"></i></a> </div>
-                            <div>Type: <span class="font-weight-bolder">{{ redirect.type.value }}</span></div>
-                            <div>Redirect Params: <code>{{ redirect.redirectParams|json_encode }}</code></div>
+                            <div class="font-weight-bolder">{{ redirect.pattern }}  </div>
+                            <div>Replacement: <code>{{ redirect.replacement }}</code></div>
                             <div>
                                 <a href="{{ path('redirects/edit', {"id": redirect.id}) }}">редактировать</a>
                                 <a href="{{ path('redirects/delete', {"id": redirect.id}) }}">удалить</a>
