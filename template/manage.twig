@@ -18,8 +18,10 @@
                 <ul>
                     {% for redirect in redirects %}
                         <li class="my-3">
-                            <div class="font-weight-bolder">{{ redirect.pattern }}  </div>
+                            <div>Pattern: <span class="font-weight-bolder">{{ redirect.pattern }}  </span></div>
                             <div>Replacement: <code>{{ redirect.replacement }}</code></div>
+                            <div>Include query: <span class="font-weight-bolder">{{ redirect.inclQuery is same as (true) ? 'Да' : 'Нет' }}</span></div>
+                            <div>Permanent: <span class="font-weight-bolder">{{ redirect.permanent is same as (true) ? 'Да' : 'Нет' }}</span></div>
                             <div>
                                 <a href="{{ path('redirects/edit', {"id": redirect.id}) }}">редактировать</a>
                                 <a href="{{ path('redirects/delete', {"id": redirect.id}) }}">удалить</a>

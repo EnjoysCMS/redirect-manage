@@ -23,6 +23,13 @@ class UrlRedirect
     #[ORM\Column(type: 'string', length: 1000)]
     private string $replacement;
 
+
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
+    private bool $permanent = true;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
+    private bool $inclQuery = true;
+
     #[ORM\Column(type: 'boolean', options: [
         'default' => true
     ])]
@@ -62,5 +69,25 @@ class UrlRedirect
     public function setReplacement(string $replacement): void
     {
         $this->replacement = $replacement;
+    }
+
+    public function isPermanent(): bool
+    {
+        return $this->permanent;
+    }
+
+    public function setPermanent(bool $permanent): void
+    {
+        $this->permanent = $permanent;
+    }
+
+    public function isInclQuery(): bool
+    {
+        return $this->inclQuery;
+    }
+
+    public function setInclQuery(bool $inclQuery): void
+    {
+        $this->inclQuery = $inclQuery;
     }
 }
