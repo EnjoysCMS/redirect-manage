@@ -6,7 +6,6 @@ namespace EnjoysCMS\RedirectManage\Middleware;
 
 use EnjoysCMS\RedirectManage\Entity\UrlRedirect;
 use EnjoysCMS\RedirectManage\Repository\UrlRedirectRepository;
-use Middlewares\Utils\Factory;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -15,14 +14,10 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 final class Redirect implements MiddlewareInterface
 {
-
-    private readonly ResponseFactoryInterface $responseFactory;
-
     public function __construct(
         private readonly UrlRedirectRepository $repository,
-        ResponseFactoryInterface $responseFactory = null
+        private readonly ResponseFactoryInterface $responseFactory
     ) {
-        $this->responseFactory = $responseFactory ?: Factory::getResponseFactory();
     }
 
     /**
@@ -57,7 +52,7 @@ final class Redirect implements MiddlewareInterface
     }
 
     /**
-     * Determine the response code according with the method and the permanent config
+     * Determine the response code according to the method and the permanent config
      */
     private function determineResponseCode(UrlRedirect $urlRedirect, ServerRequestInterface $request): int
     {
