@@ -10,18 +10,17 @@ use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\OptimisticLockException;
 use Enjoys\Forms\Exception\ExceptionRule;
 use Enjoys\Forms\Form;
-use EnjoysCMS\Core\ContentEditor\ContentEditor;
+use Enjoys\Forms\Rules;
 use EnjoysCMS\Core\Routing\Annotation\Route;
 use EnjoysCMS\RedirectManage\Repository\UrlRedirectRepository;
 use Psr\Http\Message\ResponseInterface;
-use Symfony\Component\Yaml\Yaml;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
 #[Route(
     path: '/admin/redirects/edit',
-    name: 'redirects/edit',
+    name: '@redirect_manage_edit',
     comment: 'Редактирование адреса перенаправления'
 )]
 class EditUrlRedirect extends AbstractController
@@ -49,7 +48,7 @@ class EditUrlRedirect extends AbstractController
         $form = new Form();
         $form->setDefaults([
             'pattern' => $urlRedirect->getPattern(),
-            'replacement' => Yaml::dump($urlRedirect->getReplacement()),
+            'replacement' => $urlRedirect->getReplacement(),
             'active' => [(int)$urlRedirect->isActive()],
         ]);
         $form->checkbox('active')
@@ -60,15 +59,37 @@ class EditUrlRedirect extends AbstractController
             )
             ->fill([1 => 'Включен?']);
 
-        $form->text('pattern', 'Старый URL');
-        $form->text('replacement', 'New URL');
+        $form->text('pattern', 'Pattern')
+            ->setDescription(
+                <<<HTML
+                    <b>Cheatsheet:</b><br>
+                    ASCII SLUG: <code>[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*</code><br>
+                    CATCH ALL: <code>.+</code><br>
+                    DATE YYYY-MM-DD: <code>[0-9]{4}-(?:0[1-9]|1[012])-(?:0[1-9]|[12][0-9]|(?&lt!02-)3[01])</code><br>
+                    DIGITS: <code>[0-9]+</code><br>
+                    POSITIVE_INT: <code>[1-9][0-9]*</code><br>
+                    UID_BASE32: <code>[0-9A-HJKMNP-TV-Z]{26}</code><br>
+                    UID_BASE58: <code>[1-9A-HJ-NP-Za-km-z]{22}</code><br>
+                    UID_RFC4122: <code>[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}</code><br>
+                    ULID: <code>[0-7][0-9A-HJKMNP-TV-Z]{25}</code><br>
+                    UUID: <code>[0-9a-f]{8}-[0-9a-f]{4}-[13-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}</code><br>
+                    UUID_V1: <code>[0-9a-f]{8}-[0-9a-f]{4}-1[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}</code><br>
+                    UUID_V3: <code>[0-9a-f]{8}-[0-9a-f]{4}-3[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}</code><br>
+                    UUID_V4: <code>[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}</code><br>
+                    UUID_V5: <code>[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}</code><br>
+                    UUID_V6: <code>[0-9a-f]{8}-[0-9a-f]{4}-6[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}</code><br>
+                    UUID_V7: <code>[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}</code><br>
+                    UUID_V8: <code>[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}</code><br>
+                HTML
+            )->addRule(Rules::REQUIRED);
+        $form->text('replacement', 'Replacement')->addRule(Rules::REQUIRED);
 
 
         $form->submit();
 
         if ($form->isSubmitted()) {
-            $urlRedirect->setPattern($this->request->getParsedBody()['pattern'] ?? null);
-            $urlRedirect->setReplacement($this->request->getParsedBody()['replacement'] ?? null);
+            $urlRedirect->setPattern($this->request->getParsedBody()['pattern'] ?? '');
+            $urlRedirect->setReplacement($this->request->getParsedBody()['replacement'] ?? '');
             $urlRedirect->setActive((bool)($this->request->getParsedBody()['active'] ?? false));
 
             $em->flush();
@@ -77,9 +98,15 @@ class EditUrlRedirect extends AbstractController
         $renderer = $this->adminConfig->getRendererForm();
         $renderer->setForm($form);
 
+        $this->breadcrumbs
+            ->add('@redirect_manage_list', 'Управление переадресациями')
+            ->setLastBreadcrumb('Редактирование правила переадресации');
+
         return $this->response(
             $this->twig->render('@redirect-manage/form.twig', [
-                'title' => 'Добавить redirect',
+                '_title' => 'Редактирование правила переадресации - RedirectManage | Admin | ' . $this->setting->get(
+                        'sitename'
+                    ),
                 'form' => $renderer
             ])
         );

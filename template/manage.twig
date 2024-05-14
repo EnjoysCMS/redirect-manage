@@ -9,27 +9,49 @@
 
 
         <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">{{ title }}</h3>
-            </div>
-            <!-- /.card-header -->
             <div class="card-body">
-                <a href="{{ path('redirects/add') }}">Добавить</a>
-                <ul>
-                    {% for redirect in redirects %}
-                        <li class="my-3">
-                            <div>Pattern: <span class="font-weight-bolder">{{ redirect.pattern }}  </span></div>
-                            <div>Replacement: <code>{{ redirect.replacement }}</code></div>
-                            <div>Include query: <span class="font-weight-bolder">{{ redirect.inclQuery is same as (true) ? 'Да' : 'Нет' }}</span></div>
-                            <div>Permanent: <span class="font-weight-bolder">{{ redirect.permanent is same as (true) ? 'Да' : 'Нет' }}</span></div>
-                            <div>
-                                <a href="{{ path('redirects/edit', {"id": redirect.id}) }}">редактировать</a>
-                                <a href="{{ path('redirects/delete', {"id": redirect.id}) }}">удалить</a>
-                            </div>
-                        </li>
-                    {% endfor %}
-                </ul>
+                <a class="btn btn-primary" href="{{ path('@redirect_manage_add') }}">Добавить</a>
 
+                {% if redirects %}
+                <table class="table table-striped table-hover mt-3">
+                    <thead>
+                    <tr class="bg-dark">
+                        <td>Условие</td>
+                        <td>Включать query при перенаправлении?</td>
+                        <td>Постоянный редирект?</td>
+                        <td>
+
+                        </td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for redirect in redirects %}
+                        <tr class="my-3 {{ redirect.active is same as(false) ? 'table-danger' }}">
+                            <td><span class="font-weight-bolder text-monospace ">{{ redirect.pattern }}  </span>
+                                <span class="h4 px-3">&rarr;</span>
+                                <span
+                                    class="font-weight-bolder text-monospace text-info">{{ redirect.replacement }}</span>
+                            </td>
+
+                            <td> <span
+                                    class="font-weight-bolder">{{ redirect.inclQuery is same as (true) ? 'Да' : 'Нет' }}</span>
+                            </td>
+                            <td><span
+                                    class="font-weight-bolder">{{ redirect.permanent is same as (true) ? 'Да' : 'Нет' }}</span>
+                            </td>
+                            <td>
+                                <a class="btn btn-secondary" href="{{ path('@redirect_manage_edit', {"id": redirect.id}) }}">редактировать</a>
+                                <a class="btn btn-secondary" href="{{ path('@redirect_manage_switch', {"id": redirect.id}) }}">{{ redirect.active ? 'отключить' : 'включить' }}</a>
+                                <a class="btn btn-danger"  href="{{ path('@redirect_manage_delete', {"id": redirect.id}) }}">удалить</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                    <h4 class="mt-5">Нет перенаправлений</h4>
+
+                {% endif %}
             </div>
             <!-- /.card-body -->
         </div>

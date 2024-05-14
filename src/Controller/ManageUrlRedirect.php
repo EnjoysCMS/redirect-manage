@@ -29,9 +29,13 @@ class ManageUrlRedirect extends AbstractController
     public function __invoke(UrlRedirectRepository $repository, Config $config): ResponseInterface
     {
 
+        $this->breadcrumbs->setLastBreadcrumb('Управление переадресациями');
+
         return $this->response(
             $this->twig->render('@redirect-manage/manage.twig', [
-                'title' => 'Управление переадресациями',
+                '_title' => 'Управление переадресациями - RedirectManage | Admin | ' . $this->setting->get(
+                        'sitename'
+                    ),
                 'redirects' => $repository->findBy([], ['id' => 'desc'])
             ])
         );

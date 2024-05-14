@@ -4,11 +4,10 @@ namespace EnjoysCMS\RedirectManage\Entity;
 
 
 use Doctrine\ORM\Mapping as ORM;
-use EnjoysCMS\RedirectManage\RedirectType;
 use EnjoysCMS\RedirectManage\Repository\UrlRedirectRepository;
 
 #[ORM\Entity(repositoryClass: UrlRedirectRepository::class)]
-#[ORM\Table(name: 'redirects')]
+#[ORM\Table(name: 'redirect_manage_list')]
 class UrlRedirect
 {
 

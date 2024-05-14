@@ -2,28 +2,34 @@
 
 namespace EnjoysCMS\RedirectManage\Controller;
 
+use DI\DependencyException;
+use DI\NotFoundException;
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\Exception\NotSupported;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\NoResultException;
 use Doctrine\ORM\OptimisticLockException;
+use Enjoys\Forms\Exception\ExceptionRule;
+use Enjoys\Forms\Form;
 use EnjoysCMS\Core\Routing\Annotation\Route;
-use EnjoysCMS\Module\Admin\AdminController;
 use EnjoysCMS\RedirectManage\Repository\UrlRedirectRepository;
 use Psr\Http\Message\ResponseInterface;
+use Symfony\Component\Yaml\Yaml;
+use Twig\Error\LoaderError;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 
 #[Route(
-    path: '/admin/redirects/delete',
-    name: '@redirect_manage_delete',
-    comment: 'Удаление адреса перенаправления'
+    path: '/admin/redirects/switch',
+    name: '@redirect_manage_switch',
+    comment: 'Включение/отключение редиректов'
 )]
-class DeleteUrlRedirect extends AbstractController
+class SwitchUrlRedirect extends AbstractController
 {
+
     /**
-     * @throws OptimisticLockException
-     * @throws ORMException
-     * @throws NotSupported
      * @throws NoResultException
+     * @throws ORMException
+     * @throws OptimisticLockException
      */
     public function __invoke(
         UrlRedirectRepository $repository,
@@ -33,9 +39,10 @@ class DeleteUrlRedirect extends AbstractController
             $this->request->getQueryParams()['id'] ?? 0
         ) ?? throw new NoResultException();
 
-        $em->remove($urlRedirect);
-        $em->flush();
+            $urlRedirect->setActive(!$urlRedirect->isActive());
+            $em->flush();
 
-        return $this->redirect->toRoute('@redirect_manage_list');
+            return $this->redirect->toRoute('@redirect_manage_list');
+
     }
 }
